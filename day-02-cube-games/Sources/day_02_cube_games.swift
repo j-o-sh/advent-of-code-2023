@@ -1,9 +1,3 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-// 
-// Swift Argument Parser
-// https://swiftpackageindex.com/apple/swift-argument-parser/documentation
-
 import ArgumentParser
 
 @main
@@ -19,6 +13,30 @@ struct Cubegames: ParsableCommand {
   var blues: Int
 
   mutating func run() throws {
-    print("Hello, world!")
+    // let games = GamesJournal(fromFile: gamesFile)
+    let games = GamesJournal()
+
+    let (possible, impossible) = games.concludeOn(red: reds, green: greens, blue: blues)
+
+    for (label) in possible {
+      print("\(label) is possible.")
+    }
+
+    print("\n----\n")
+
+    for (game, cause) in impossible {
+      print("\(game.label) is impossible because \(cause)")
+    }
+
+    print("\n----\n")
+
+    // let re = try Regex("[0-9]+")
+    // let possibleSum = possible
+    //   .map { 
+    //     let strNum: String = $0.label.firstRange(of: re).
+    //     return Int("") || 0
+    //   }
+    //   .reduce(0, +)
+    // print("Possible sum is: \(possibleSum)")
   }
 }

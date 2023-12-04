@@ -1,8 +1,24 @@
+import Foundation
+
 typealias GamePlay = (red: Int, green: Int, blue: Int)
 typealias Conclusion = (
   possible: [GameRecord], 
   impossible: [(game: GameRecord, cause: String)]
 )
+
+func asGamePlay(input: String) -> GamePlay {
+  var red = 0, green = 0, blue = 0
+  for x in input.components(separatedBy: ",") {
+    let parts = x.components(separatedBy: .whitespaces)
+    switch parts[1] {
+    case "red": red = Int(parts[0]) ?? 0
+    case "green": green = Int(parts[0]) ?? 0
+    case "blue": blue = Int(parts[0]) ?? 0
+    default: break
+    }
+  }
+  return (red, green, blue)
+}
 
 func findContradictions(_ game: GameRecord, red: Int, green: Int, blue: Int) -> String? {
   let condradicting = game.plays
@@ -29,6 +45,15 @@ struct GamesJournal {
       ]),
       GameRecord(label: "G2", plays: [(red: 1, green: 3, blue: 2)])
     ]
+  }
+
+  init(fromFile: String) throws {
+    let content = try String(contentsOfFile: fromFile)
+    games = content.components(separatedBy: .newlines)
+      .map { $0.components(separatedBy: ":") }
+      .map { ($0[0], $0[1].components(separatedBy: ";")) }
+      .map { ($0.0, $0.1.map(asGamePlay) ) }
+      .map { GameRecord(label: $0.0, plays: $0.1) }
   }
 
   func concludeOn(red: Int, green: Int, blue: Int) -> Conclusion {

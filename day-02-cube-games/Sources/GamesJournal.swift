@@ -5,8 +5,12 @@ typealias Conclusion = (
 )
 
 func findContradictions(_ game: GameRecord, red: Int, green: Int, blue: Int) -> String? {
+  let condradicting = game.plays
+    .filter { $0.red > red || $0.green > green || $0.blue > blue }
 
-  return nil
+  return condradicting.isEmpty ? nil : condradicting
+    .map { "red \($0.red) (\(red)) green \($0.green) (\(green)) blue \($0.blue) (\(blue))" }
+    .joined(separator: " ; ")
 }
 
 struct GameRecord {

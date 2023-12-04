@@ -14,7 +14,7 @@ struct Cubegames: ParsableCommand {
 
   mutating func run() throws {
     // let games = GamesJournal(fromFile: gamesFile)
-    let games = GamesJournal()
+    let games = try GamesJournal(fromFile: gamesFile)
 
     let (possible, impossible) = games.concludeOn(red: reds, green: greens, blue: blues)
 

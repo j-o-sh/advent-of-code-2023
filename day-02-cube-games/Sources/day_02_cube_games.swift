@@ -28,5 +28,12 @@ struct Cubegames: ParsableCommand {
     }
 
     print("\n----\n")
+
+    let result = possible
+      .map { $0.label.filter { $0.isNumber } }
+      .map { Int($0) ?? 0 }
+      .reduce(0, +)
+    
+    print(result)
   }
 }

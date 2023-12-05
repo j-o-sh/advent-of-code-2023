@@ -13,7 +13,6 @@ struct Cubegames: ParsableCommand {
   var blues: Int
 
   mutating func run() throws {
-    // let games = GamesJournal(fromFile: gamesFile)
     let games = try GamesJournal(fromFile: gamesFile)
 
     let (possible, impossible) = games.concludeOn(red: reds, green: greens, blue: blues)
@@ -29,14 +28,5 @@ struct Cubegames: ParsableCommand {
     }
 
     print("\n----\n")
-
-    // let re = try Regex("[0-9]+")
-    // let possibleSum = possible
-    //   .map { 
-    //     let strNum: String = $0.label.firstRange(of: re).
-    //     return Int("") || 0
-    //   }
-    //   .reduce(0, +)
-    // print("Possible sum is: \(possibleSum)")
   }
 }

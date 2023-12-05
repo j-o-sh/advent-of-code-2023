@@ -8,8 +8,8 @@ typealias Conclusion = (
 
 func asGamePlay(input: String) -> GamePlay {
   var red = 0, green = 0, blue = 0
-  for x in input.components(separatedBy: ",") {
-    let parts = x.components(separatedBy: .whitespaces)
+  for x in input.trimmingCharacters(in: .whitespaces).components(separatedBy: ",") {
+    let parts = x.trimmingCharacters(in: .whitespaces).components(separatedBy: .whitespaces)
     switch parts[1] {
     case "red": red = Int(parts[0]) ?? 0
     case "green": green = Int(parts[0]) ?? 0
@@ -20,18 +20,35 @@ func asGamePlay(input: String) -> GamePlay {
   return (red, green, blue)
 }
 
-func findContradictions(_ game: GameRecord, red: Int, green: Int, blue: Int) -> String? {
-  let condradicting = game.plays
-    .filter { $0.red > red || $0.green > green || $0.blue > blue }
+func checkDice(_ name: String, played: Int, secret: Int) -> (Bool, String) {
+  if (played > secret) { return (true, "**\(played) \(name)**") }
+  else { return (false, "\(played) \(name)") }
+}
 
-  return condradicting.isEmpty ? nil : condradicting
-    .map { "red \($0.red) (\(red)) green \($0.green) (\(green)) blue \($0.blue) (\(blue))" }
-    .joined(separator: " ; ")
+func findContradictions(_ game: GameRecord, red: Int, green: Int, blue: Int) -> String? {
+  let found = game.plays
+    .map {[
+      checkDice("red", played: $0.red, secret: red),
+      checkDice("green", played: $0.green, secret: green),
+      checkDice("blue", played: $0.blue, secret: blue)
+    ]}
+    .map {(
+      $0.reduce(false) { $0 || $1.0 },
+      $0.reduce("") { "\($0) \($1.1)" }
+    )}
+    .filter { $0.0 }
+    .map { $0.1 }
+
+  return found.isEmpty ? nil : "\n\t - " + found.joined(separator: "\n\t - ")
 }
 
 struct GameRecord {
   let label: String
   let plays: [GamePlay] 
+}
+
+func splitStr(_ str: String, by: String) -> [String] {
+  return str.components(separatedBy: by).map { $0.trimmingCharacters(in: .whitespaces) }
 }
 
 struct GamesJournal {
@@ -49,11 +66,13 @@ struct GamesJournal {
 
   init(fromFile: String) throws {
     let content = try String(contentsOfFile: fromFile)
-    games = content.components(separatedBy: .newlines)
-      .map { $0.components(separatedBy: ":") }
-      .map { ($0[0], $0[1].components(separatedBy: ";")) }
-      .map { ($0.0, $0.1.map(asGamePlay) ) }
-      .map { GameRecord(label: $0.0, plays: $0.1) }
+    self.games = content.components(separatedBy: .newlines)
+      .filter { !$0.isEmpty }
+      .map { splitStr($0, by: ":") }
+      .map { GameRecord( 
+        label: $0[0], 
+        plays: splitStr($0[1], by: ";").map {asGamePlay(input: $0)}
+      ) }
   }
 
   func concludeOn(red: Int, green: Int, blue: Int) -> Conclusion {

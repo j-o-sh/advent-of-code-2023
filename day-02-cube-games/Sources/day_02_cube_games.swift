@@ -4,17 +4,33 @@ import ArgumentParser
 struct Cubegames: ParsableCommand {
   @Option(name: [.long, .customShort("f")])
   var gamesFile: String
+
+  @Flag
+  var findMinimum = false
   
   @Argument
-  var reds: Int
+  var reds = 0
   @Argument
-  var greens: Int
+  var greens = 0
   @Argument
-  var blues: Int
+  var blues = 0
 
   mutating func run() throws {
     let games = try GamesJournal(fromFile: gamesFile)
 
+    if (findMinimum) {
+      let min = games.findMinimalPlays()
+      for (label, minimum, power) in min {
+        print("  - \(label): \(minimum) -> \(power)")
+      }
+      print("----")
+      print("Combined Power: \(min.map({$0.power}).reduce(0, +))")
+    } else {
+      try possibleGames(games)
+    }
+  }
+
+  func possibleGames(_ games: GamesJournal) throws {
     let (possible, impossible) = games.concludeOn(red: reds, green: greens, blue: blues)
 
     for (label) in possible {

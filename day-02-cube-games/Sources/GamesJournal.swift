@@ -20,6 +20,15 @@ func asGamePlay(input: String) -> GamePlay {
   return (red, green, blue)
 }
 
+func gamePower(play: GamePlay) -> Int {
+  return play.red * play.green * play.blue
+}
+
+struct GameRecord {
+  let label: String
+  let plays: [GamePlay] 
+}
+
 func checkDice(_ name: String, played: Int, secret: Int) -> (Bool, String) {
   if (played > secret) { return (true, "**\(played) \(name)**") }
   else { return (false, "\(played) \(name)") }
@@ -42,10 +51,15 @@ func findContradictions(_ game: GameRecord, red: Int, green: Int, blue: Int) -> 
   return found.isEmpty ? nil : "\n\t - " + found.joined(separator: "\n\t - ")
 }
 
-struct GameRecord {
-  let label: String
-  let plays: [GamePlay] 
+func findMinimalSet(_ plays: [GamePlay]) -> GamePlay {
+  return (
+    red:   plays.map({ $0.red   }).reduce(0, max),
+    green: plays.map({ $0.green }).reduce(0, max), 
+    blue:  plays.map({ $0.blue  }).reduce(0, max) 
+  )
 }
+
+// func powerOfPlay()
 
 func splitStr(_ str: String, by: String) -> [String] {
   return str.components(separatedBy: by).map { $0.trimmingCharacters(in: .whitespaces) }
@@ -87,8 +101,21 @@ struct GamesJournal {
         }
       }
   }
+
+  func findMinimalPlays() -> [(label: String, minimal: GamePlay, power: Int)] {
+    return games
+      .map {(
+        label: $0.label,
+        minimal: findMinimalSet($0.plays)
+      )}
+      .map {(
+        label: $0.label,
+        minimal: $0.minimal,
+        power: gamePower(play: $0.minimal)
+      )}
+  }
 }
-  
+
 extension GamesJournal: Sequence {
   func makeIterator() -> some IteratorProtocol {
     return games.makeIterator()

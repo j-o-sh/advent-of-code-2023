@@ -11,13 +11,41 @@ struct BoundRange: CustomStringConvertible {
     let src: String
     var ranges: [Range<String.Index>] = []
 
-    init(src: String, range: Range<String.Index>) {
+    init(src: String, ranges: [Range<String.Index>]) {
         self.src = src
-        self.ranges = [range]
+        self.ranges = ranges
     }
 
     var description: String {
         return ranges.map({ src[$0] }).joined(separator: "\n")
+    }
+
+    func clampV() -> BoundRange {
+        guard let firstRange = ranges.first else { return self }
+
+        if (ranges.count > 2) {
+            return BoundRange(src: src, ranges: Array(ranges[1..<ranges.count - 1]))
+        } else if (src.lineRange(for: firstRange).lowerBound > src.startIndex) {
+            return BoundRange(src: src, ranges: Array(ranges[1..<ranges.count]))
+        } else {
+            return BoundRange(src: src, ranges: Array(ranges[0..<ranges.count - 1]))
+        }
+    }
+
+    func clampH() -> BoundRange {
+        return BoundRange(
+            src: src,
+            ranges: ranges
+                .map { src.index(after: $0.lowerBound)..<src.index(before: $0.upperBound) }
+        )
+    }
+
+    var innerNumbers: String {
+        return self.description.filter { $0.isNumber }
+    }
+
+    func contains(_ re: any RegexComponent) -> Bool {
+        return ranges.contains(where: {src[$0].contains(re)})
     }
 
     mutating func expandH() {
@@ -74,21 +102,26 @@ struct day_03_fixing_engines: ParsableCommand {
 
     mutating func run() throws {
         let numbers = try Regex("[0-9]+")
+        let partsSymbol = try Regex("[^[0-9]\\.\\s]")
 
-        let schematic = try String(contentsOfFile: inputFile)
+        let contents = try String(contentsOfFile: inputFile)
+        let parts = contents.ranges(of: numbers)
+            .map({ (range: Range<String.Index>) -> BoundRange in 
+                var r = BoundRange(src: contents, ranges: [range])
+                r.expandV()
+                r.expandH()
+                return r
+            })
+            .filter { $0.contains(partsSymbol) }
+            .map { $0.clampV() }
+            .map { $0.innerNumbers }
 
-        for r in schematic.ranges(of: numbers) {
-            var partno = BoundRange(src: schematic, range: r)
-            partno.expandH()
-            partno.expandV()
-            print(partno)
-            print("   ")
-        }
+        for part in parts { print("\(part)\n--") }
 
-        // let partnrs = schematic.ranges(of: numbers)
-        //     .map { BoundRange(src: schematic, range: $0) }
-        //     .map { $0.expand(left: 1, right: 1) }
-        //
-        // print(partnrs)
+        let total = parts
+            .map { Int($0.description) ?? 0 }
+            .reduce(0, +)
+
+        print("Total: \(total)")
     }
 }

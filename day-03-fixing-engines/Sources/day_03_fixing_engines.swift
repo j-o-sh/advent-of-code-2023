@@ -59,7 +59,7 @@ struct BoundRange: CustomStringConvertible {
         let lastLine = src.lineRange(for: lastRange)
         if (lastLine.upperBound < src.endIndex) {
             let down = src.index(after: lastLine.upperBound)
-            let lineDownStart = src.lineRange(for: down...down).upperBound
+            let lineDownStart = src.lineRange(for: down...down).lowerBound
             let start = src.index(lineDownStart, offsetBy: leftBound)
             let end = src.index(lineDownStart, offsetBy: rightBound)
             self.ranges.append(start..<end)

@@ -100,6 +100,17 @@ struct BoundRange: CustomStringConvertible {
             .map { $0.count }
             .reduce(0, +)
     }
+
+    func expandedParts(containing: any RegexComponent) -> BoundRange {
+        let found = src.ranges(of: containing)
+        return BoundRange(src:src, ranges: ranges.flatMap { range in
+            return found.filter { $0.overlaps(range) } 
+        })
+    }
+
+    func converted<T>(_ mapper: (Substring) -> T) -> [T] {
+        return ranges.map { mapper(src[$0]) }
+    }
 }
 
 @main
@@ -140,12 +151,13 @@ struct day_03_fixing_engines: ParsableCommand {
                 return r
             })
             .filter { $0.count(numbers) > 1 }
-            // -> expand numbers
-            // -> extract numbers
-            // -> multiply numbers
-            // reduce(0, +)
+            .map { $0.expandedParts(containing: numbers) }
+            .map { $0.converted { x in Int(x) ?? 0 } }
+            .map { $0.reduce(1, *) }
 
-        print(gears)
+        for gear in gears { print("\(gear)") }
+
+        print("Total: \(gears.reduce(0, +))")
     }
 
     func countParts(contents: String) throws {

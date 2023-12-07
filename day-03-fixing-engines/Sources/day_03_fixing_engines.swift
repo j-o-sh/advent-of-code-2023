@@ -93,18 +93,65 @@ struct BoundRange: CustomStringConvertible {
             self.ranges.append(start..<end)
         }
     }
+
+    func count(_ search: any RegexComponent) -> Int {
+        return ranges
+            .map { src[$0].ranges(of: search) }
+            .map { $0.count }
+            .reduce(0, +)
+    }
 }
 
 @main
 struct day_03_fixing_engines: ParsableCommand {
+    enum Command: String {
+        case parts
+        case gears
+
+        // init?(argument: String) {
+        //     guard let match = Command(rawValue: argument) else { return nil }
+        //     self = match
+        // }
+    }
+
     @Argument
     var inputFile: String
 
+    @Flag
+    var calcGears: Bool = false
+
     mutating func run() throws {
+        let contents = try String(contentsOfFile: inputFile)
+        if (calcGears) {
+            try calcGears(contents: contents)
+        } else {
+            try countParts(contents: contents)
+        }
+    }
+
+    func calcGears(contents: String) throws {
+        let numbers = try Regex("[0-9]+")
+
+        let gears = contents.ranges(of: try Regex("\\*"))
+            .map({ (range: Range<String.Index>) -> BoundRange in 
+                var r = BoundRange(src: contents, ranges: [range])
+                r.expandV()
+                r.expandH()
+                return r
+            })
+            .filter { $0.count(numbers) > 1 }
+            // -> expand numbers
+            // -> extract numbers
+            // -> multiply numbers
+            // reduce(0, +)
+
+        print(gears)
+    }
+
+    func countParts(contents: String) throws {
         let numbers = try Regex("[0-9]+")
         let partsSymbol = try Regex("[^[0-9]\\.\\s]")
 
-        let contents = try String(contentsOfFile: inputFile)
         let parts = contents.ranges(of: numbers)
             .map({ (range: Range<String.Index>) -> BoundRange in 
                 var r = BoundRange(src: contents, ranges: [range])

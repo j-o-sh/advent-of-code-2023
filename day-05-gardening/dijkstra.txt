@@ -1,0 +1,14 @@
+Here is the modified version of the algorithm where distance is treated as a list of nodes towards the start:
+
+1. Find starting edges as those that contain the starting node.
+2. Assign all starting edges an empty distance list.
+3. For each starting edge, find all connected edges and:
+   - Ignore the edge if it already has a distance assigned.
+   - Assign a distance list by appending the current edge to the distance list of the starting edge.
+   - Test if the connected edge contains the end node and return the distance list + current edge as the result in this case.
+4. Perform step 3 again, finding all connected edges to currently visited ones.
+5. If we reach this point, assume the end cannot be reached within the graph and return an appropriate result (e.g., an empty list).
+
+In this modified version, instead of using a numeric distance, we treat distance as a list of nodes towards the start. We start by finding the starting edges that contain the starting node and assign them an empty distance list. Then, we iterate through each starting edge and examine its connected edges. For each connected edge, we check if it already has a distance assigned. If it does, we ignore it. Otherwise, we assign a distance list by appending the current edge to the distance list of the starting edge. If the connected edge contains the end node, we return the distance list + current edge as the result, indicating the shortest path. After that, we repeat step 3, finding all connected edges to the currently visited ones. Finally, if we reach this point without finding the end node, we assume that the end cannot be reached within the graph and return an appropriate result, such as an empty list.
+
+This modification allows for a more locality-efficient representation of the distance, as it directly captures the path from the start node to the current edge.

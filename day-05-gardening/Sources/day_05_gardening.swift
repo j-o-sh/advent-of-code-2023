@@ -36,7 +36,6 @@ struct day_05_gardening: ParsableCommand {
             // print("***\(seeds)***")
             let path = path(from: "seed", to: "location", in: almanac)
             print("seed\(path.map({" -> \($0.to)"}).joined())")
-            var found: [(Int, Int)] = []
             let seednrs = seeds
                 .split(separator: " ")
                 .dropFirst()
@@ -51,18 +50,26 @@ struct day_05_gardening: ParsableCommand {
 
             print("Ranges: \(seedcode)")
 
+            var found: (Int, Int)? = nil
             var counter = 1
+            var percent = -1
             let all = seedcode.reduce(0) { $0 + $1.1 }
             print("Considering \(all) seeds.")
             for (start, length) in seedcode {
                 for seed in start..<(start + length) {
-                    print("\(counter)\t| \((counter/all) * 100)%\t| \(seed)", terminator: "\r")
-                    fflush(stdout)
+                    let nPercent = (counter/all)*1000
+                    if (nPercent > percent ) {
+                        percent = nPercent
+                        print("\(seed) | \((counter/all) * 100)%%\t| \(start)...(\(length)) | Current lowest: \(String(describing: found))", terminator: "\r")
+                        fflush(stdout)
+                    }
                     counter += 1
-                    found.append((seed, findLocationFor(seed: seed, in: path)))
+                    // found.append((seed, findLocationFor(seed: seed, in: path)))
+                    let location = findLocationFor(seed: seed, in: path)
+                    if (found == nil || location < found!.1) { found = (seed, location) }
                 }
             }
-            print("\nFound (seed, location): \(found.sorted(by: { $0.1 < $1.1 }).first!)")
+            print("\nFound (seed, location): \(String(describing: found))")
         }
     }
 }

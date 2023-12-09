@@ -31,22 +31,47 @@ struct day_05_gardening: ParsableCommand {
         case "path":
             print("*** [ seed -> ?? -> location ] ***")
             print("-> location: \(path(from: "seed", to: "location", in: almanac))")
+        case "find-back":
+            let path = path(from: "seed", to: "location", in: almanac).reversed()
+            let seedcode = seedRanges(seeds: seeds) 
+            print("\(path.map({"\($0.to)\t<-\t"}).joined())seed")   
+
+            func printValues(_ values: [Int]) {
+                print(
+                    values.map({"\($0)"}).joined(separator: " | "),
+                    terminator: "\r"
+                )
+                fflush(stdout)
+            }
+
+            print("@@\(path.first!.valuesSortedByDest())")
+            for (from, to) in path.first!.valuesSortedByDest() {
+                let map = findRMappingsFor(to: to, path: path)
+                print("\(from) -> \(to) <-- \(map.map({"\($0.0)"}).joined(separator: " <- "))", terminator: "\r")
+
+                if (isKnown(map.last!.0, in: seedcode)) { 
+                    print("\nFound location: \(to) for seed: \(map.last)")
+                    break 
+                }
+
+            }
+            // for (from, to) in path.first!.valuesSortedByDest() {
+            //     // print("$ \(to)<-\(from)")
+            //     let values = findRValuesFor(to, path: path)
+            //     let source = values.last!
+            //     // printValues(values)
+            //     print("\(from) -- \(to) --> \(source): \(values)")
+            //     if (isKnown(source, in: seedcode)) { 
+            //         print("\nFound location: \(to) for seed: \(source)")
+            //         break 
+            //     }
+            // }
+            print("\n")
         case "find": fallthrough
         default:
-            // print("***\(seeds)***")
             let path = path(from: "seed", to: "location", in: almanac)
             print("seed\(path.map({" -> \($0.to)"}).joined())")
-            let seednrs = seeds
-                .split(separator: " ")
-                .dropFirst()
-                .compactMap { Int($0) }
-
-            let seedcode: [(Int, Int)] = seednrs
-                .enumerated()
-                .reduce(into: []) { r, v in 
-                    if (v.0 % 2 == 0) { r.append((v.1, 0)) } 
-                    else { r[r.count - 1].1 = v.1 }
-                }
+            let seedcode = seedRanges(seeds: seeds) 
 
             print("Ranges: \(seedcode)")
 
@@ -72,6 +97,26 @@ struct day_05_gardening: ParsableCommand {
             print("\nFound (seed, location): \(String(describing: found))")
         }
     }
+}
+
+func seedRanges(seeds: some StringProtocol) -> [(Int, Int)] {
+    let seednrs = seeds
+        .split(separator: " ")
+        .dropFirst()
+        .compactMap { Int($0) }
+
+    return seednrs
+        .enumerated()
+        .reduce(into: []) { r, v in 
+            if (v.0 % 2 == 0) { r.append((v.1, 0)) } 
+                else { r[r.count - 1].1 = v.1 }
+        }
+        .sorted { $0.0 < $1.0 }
+}
+
+func isKnown(_ value: Int, in ranges: [(Int, Int)]) -> Bool {
+    let range = ranges.first(where: { $0.0 <= value && value <= ($0.0 + $0.1) })
+    return range != nil
 }
 
 func findLocationFor(seed: Int, in path: [Mapping]) -> Int {
@@ -101,43 +146,3 @@ func path(from: String, to: String, in graph: [Mapping]) -> [Mapping] {
     return shortestPath(to: to, from: from, in: graph) ?? []
 }
 
-
-
-struct Mapping: CustomStringConvertible, Traversable {
-    let from: String
-    let to: String
-    let map: [(Int, Int, Int)]
-
-    init(source: String) {
-        let lines = source.split(separator: "\n")
-
-        let fields = lines[0].split(separator: " ")[0].split(separator: "-")
-        
-        from = "\(fields[0])"
-        to = "\(fields[2])"
-        map = lines[1..<lines.count]
-            .map { $0.split(separator: " ").compactMap({ s in Int(s) }) }
-            .filter { $0.count == 3 }
-            .map { ($0[1], $0[0], $0[2]) }
-            .sorted(by: { $0.0 < $1.0 })
-        // map.sort(by: { $0.0 < $1.0 })
-            // .flatMap { entry in 
-            //     Array(0..<entry[2]).map({ i in ( entry[0] + i, entry[1] + i ) })
-            // }
-        // print("---[map \(from) -> \(to)]---")
-        // map.forEach { print($0) }
-        // print("----------------------------")
-    }
-
-    func target(from: Int) -> Int {
-        if let assotiation = map.first(where: { $0.0 == from }) {
-            return assotiation.1
-        } else if let found = map.first(where: { $0.0 <= from && from <= $0.0+$0.2 }) {
-            return found.1 + (from - found.0)
-        } else {
-            return from
-        }
-    }
-
-    var description: String { return "\(from) -> \(to)" }
-}

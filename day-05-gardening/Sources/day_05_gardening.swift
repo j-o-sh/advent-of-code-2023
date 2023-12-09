@@ -37,24 +37,47 @@ struct day_05_gardening: ParsableCommand {
             let path = path(from: "seed", to: "location", in: almanac)
             print("seed\(path.map({" -> \($0.to)"}).joined())")
             var found: [(Int, Int)] = []
-            let allSeeds = seeds.split(separator: " ").dropFirst().compactMap { Int($0) }
-            for seed in allSeeds {
-                // print("'@\(seed)' - \(path)")
-                var from = seed
-                var values = [from]
-                for node in path {
-                    let to = node.target(from: from)
-                    // print("* \(node.from):\(from) -> \(node.to):\(to)")
-                    values.append(to)
-                    // print("\(from) -> \(to)")
-                    from = to
+            let seednrs = seeds
+                .split(separator: " ")
+                .dropFirst()
+                .compactMap { Int($0) }
+
+            let seedcode: [(Int, Int)] = seednrs
+                .enumerated()
+                .reduce(into: []) { r, v in 
+                    if (v.0 % 2 == 0) { r.append((v.1, 0)) } 
+                    else { r[r.count - 1].1 = v.1 }
                 }
-                found.append((seed, values.last!))
-                // print("- for \(seed): \(values.last!) ~~ \(String(describing: values))")
+
+            print("Ranges: \(seedcode)")
+
+            var counter = 1
+            let all = seedcode.reduce(0) { $0 + $1.1 }
+            print("Considering \(all) seeds.")
+            for (start, length) in seedcode {
+                for seed in start..<(start + length) {
+                    print("\(counter)\t| \((counter/all) * 100)%\t| \(seed)", terminator: "\r")
+                    fflush(stdout)
+                    counter += 1
+                    found.append((seed, findLocationFor(seed: seed, in: path)))
+                }
             }
-            print("Found (seed, location): \(found.sorted(by: { $0.1 < $1.1 }).first!)")
+            print("\nFound (seed, location): \(found.sorted(by: { $0.1 < $1.1 }).first!)")
         }
     }
+}
+
+func findLocationFor(seed: Int, in path: [Mapping]) -> Int {
+    var from = seed
+    var values = [from]
+    for node in path {
+        let to = node.target(from: from)
+        // print("* \(node.from):\(from) -> \(node.to):\(to)")
+        values.append(to)
+        // print("\(from) -> \(to)")
+        from = to
+    }
+    return values.last!
 }
 
 func segmentsOf(_ content: String) -> [String] {
